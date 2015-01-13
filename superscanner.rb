@@ -1,8 +1,12 @@
+# This test has been completed using Plain Old Ruby Objects to simply demonstrate the algorithm
+# and demonstrate that I can code Ruby as well as Rails!
+
 class Product
 	attr_accessor :name, :unit_price, :unit
-	attr_reader :rules
+	attr_reader :id, :rules
 
-	def initialize(name, unit_price, unit, rules = {})
+	def initialize(id, name, unit_price, unit, rules = {})
+    @id = id
 		@name = name
 		@unit_price = unit_price
 		@unit = unit
@@ -10,6 +14,7 @@ class Product
 	end
 
 	def add_rule(rule)
+    rule.product_id = id
 		rules[rule.name] = rule
 	end
 
@@ -23,7 +28,7 @@ class Product
 end
 
 class PricingRule
-  attr_accessor :name, :amount, :price, :start, :fin
+  attr_accessor :name, :amount, :price, :start, :fin, :product_id
 
   def initialize(name, amount, price, start = nil, fin = nil)
     @name = name

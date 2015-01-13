@@ -3,7 +3,7 @@ load 'superscanner.rb'
 
 class TestSuperscanner < Minitest::Test
   def setup
-    @product = Product.new("invisibilty cloak", 1000, "item")
+    @product = Product.new(1, "invisibilty cloak", 1000, "item")
   end
 
   def test_empty_ruleset
@@ -11,10 +11,15 @@ class TestSuperscanner < Minitest::Test
   end
 
   def test_add_rule
-    @product.add_rule(PricingRule.new("three for a dollar", 1, 2500))
+    @product.add_rule(PricingRule.new("three for a steal", 1, 2500))
     assert_equal 1, @product.rule_size
-    assert_equal 1, @product.rules["three for a dollar"].amount
-    assert_equal 1000, @product.rule_price("three for a dollar")
+    assert_equal 1, @product.rules["three for a steal"].amount
+    assert_equal 1000, @product.rule_price("three for a steal")
+  end
+
+  def test_add_product_link
+    @product.add_rule(PricingRule.new("two for a steal", 1, 1500))
+    assert_equal 1, @product.rules["two for a steal"].product_id
   end
 
   def test_timeboxing_start_only
