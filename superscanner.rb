@@ -2,6 +2,8 @@
 # and demonstrate that I can code Ruby as well as Rails!
 
 class Product
+  include Comparable
+
 	attr_accessor :name, :unit_price, :unit
 	attr_reader :id, :rules
 
@@ -12,6 +14,10 @@ class Product
 		@unit = unit
 		@rules = rules
 	end
+
+  def <=>(other)
+    unit_price <=> other.unit_price
+  end
 
 	def add_rule(rule)
     rule.product_id = id
@@ -28,6 +34,8 @@ class Product
 end
 
 class PricingRule
+  include Comparable
+
   attr_accessor :name, :amount, :price, :start, :fin, :product_id
 
   def initialize(name, amount, price, start = nil, fin = nil)
@@ -36,6 +44,10 @@ class PricingRule
     @price = price
     @start = start
     @fin = fin
+  end
+
+  def <=>(other)
+    unit_price <=> other.price
   end
 
   def timeboxed?
@@ -57,25 +69,27 @@ class CheckOut
   end
 
   def scan(product)
-
     if @basket[product]
-
+      @basket[product] += 1
     else
-
+      @basket[product] = 1
     end
   end
-
-  # return total price
 
   def total
     total_price = 0
 
     @basket.each_pair do |product, amount|
 
-    product_pricing_rules
+      product_pricing_rules = @pricing_rules[product.id]
+    
+      if product_picing_rules && !product_pricing_rules.empty?
+        price, amount = apply_pricing_rules(product, amount, product_pricing_rules)
+        total_price += price
+      end
 
+      total_price += product.unit_price * amount if amount > 0
     end
-
     total_price
   end
 
@@ -84,11 +98,16 @@ class CheckOut
   def apply_pricing_rules(product, amount, pricing_rules)
     price = 0
 
-    # sort pricing rules by unit price
     pricing_rules.sort!{|a,b| a.unit_price <=> b.unit_price}
 
     pricing_rules.each do |pricing_rule|
+      
+      break if pricing_rule.unit_price > product.unit_price
 
+      while amount >= pricing_rule.amount
+        price += pricing_rule.price
+        amount -= pricing_rule.amount
+      end
     end
 
     return price, amount
