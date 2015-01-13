@@ -55,7 +55,7 @@ class CheckOut
       # rule threshold.
       while amount >= pricing_rule.amount
         price += pricing_rule.price
-        amount -= pricing_rule.amount
+        amount -= 1
       end
     end
     
