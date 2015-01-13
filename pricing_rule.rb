@@ -16,7 +16,7 @@ class PricingRule
   end
 
   def timeboxed?
-  	start && fin
+    start && fin
   end
 
   def no_time_limit

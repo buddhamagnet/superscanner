@@ -18,7 +18,7 @@ class CheckOut
     else
       basket[product] = 1
     end
-    self
+    return self
   end
 
   def total
@@ -35,7 +35,7 @@ class CheckOut
 
       total_price += product.unit_price * amount if amount > 0
     end
-    total_price
+    return total_price
   end
 
   private
