@@ -100,6 +100,7 @@ class TestCheckout < Minitest::Test
 
   def test_pricing_rules_two_for_one
     @checkout.scan(@products.first).scan(@products.first)
+    # first item at full price, second at half price.
     assert_equal 2310, @checkout.total
   end
 
@@ -110,6 +111,14 @@ class TestCheckout < Minitest::Test
 
   def test_pricing_rules_half_price_per_kilo_triggered
     @checkout.scan(@products[2]).scan(@products[2]).scan(@products[2])
+    # first two items at full price, third at half price.
     assert_equal 250, @checkout.total
+  end
+
+  def test_pricing_rules_half_price_per_kilo_endless
+    @checkout.scan(@products[2]).scan(@products[2]).scan(@products[2])
+    @checkout.scan(@products[2]).scan(@products[2]).scan(@products[2])
+    # first two items at full price, third at half price.
+    assert_equal 400, @checkout.total
   end
 end
