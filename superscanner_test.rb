@@ -1,39 +1,76 @@
 require 'minitest/autorun'
+require 'timecop'
+
 load 'superscanner.rb'
 
-class TestSuperscanner < Minitest::Test
+class TestProducts < Minitest::Test
+
+  def test_sort_products
+    products = [
+      Product.new(1, "elder wand", 1540, "item"),
+      Product.new(2, "invisibilty cloak", 1000, "item"),
+      Product.new(3, "space dust", 100, "kg"),
+      Product.new(4, "melange", 19456, "kg"),
+      Product.new(5, "mithril", 23234, "kg"),
+      Product.new(6, "google glass", 850, "pair")
+    ]
+    products.sort!
+    assert_equal 100, products.first.unit_price
+    assert_equal 23234, products.last.unit_price
+  end
+end
+
+class TestPricingRule < Minitest::Test
   def setup
-    @product = Product.new(1, "invisibilty cloak", 1000, "item")
+    @rule_1 = PricingRule.new(1, "two for one", 2, 1540)
+    @rule_2 = PricingRule.new(1, "two for one", 2, 1540, Time.now, nil)
+    @rule_3 = PricingRule.new(1, "two for one", 2, 1540, nil, Time.now)
+    @rule_4 = PricingRule.new(1, "two for one", 2, 1540, Time.now, Time.now + 86400)
   end
 
-  def test_empty_ruleset
-    assert @product.rules.empty?
+  def test_no_time_limit
+    assert @rule_1.no_time_limit
   end
 
-  def test_add_rule
-    @product.add_rule(PricingRule.new("three for a steal", 1, 2500))
-    assert_equal 1, @product.rule_size
-    assert_equal 1, @product.rules["three for a steal"].amount
-    assert_equal 1000, @product.rule_price("three for a steal")
+  def test_no_end_time
+    assert @rule_2.no_time_limit
   end
 
-  def test_add_product_link
-    @product.add_rule(PricingRule.new("two for a steal", 1, 1500))
-    assert_equal 1, @product.rules["two for a steal"].product_id
+  def test_started
+    assert @rule_2.started?
   end
 
-  def test_timeboxing_start_only
-    @product.add_rule(PricingRule.new("start but no end", 1, 2500, Time.now))
-    assert !@product.rules["start but no end"].timeboxed?
+  def test_not_started
+    Timecop.freeze(Date.today - 30) do
+      assert @rule_2.not_started?
+    end
   end
 
-  def test_timeboxing_end_only
-    @product.add_rule(PricingRule.new("end but no start", 1, 2500, nil, Time.now))
-    assert !@product.rules["end but no start"].timeboxed?
+  def test_no_start_time
+    assert @rule_3.no_time_limit
   end
 
-  def test_timeboxing_valid
-    @product.add_rule(PricingRule.new("timeboxed", 1, 2500, Time.now, Time.now + 86400))
-    assert @product.rules["timeboxed"].timeboxed?
+  def test_expired
+    Timecop.freeze(Date.today + 150) do
+      assert @rule_3.expired?
+    end
+  end
+
+  def test_timeboxed
+    assert @rule_4.timeboxed?
+  end
+
+  def test_active
+    assert @rule_4.active?
+  end
+end
+
+class TestCheckout < Minitest::Test
+  def setup
+    @checkout = CheckOut.new
+  end
+
+  def test_initial_basket_state
+    assert @checkout.basket.empty?
   end
 end

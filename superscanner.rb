@@ -5,32 +5,18 @@ class Product
   include Comparable
 
 	attr_accessor :name, :unit_price, :unit
-	attr_reader :id, :rules
+	attr_reader :id
 
-	def initialize(id, name, unit_price, unit, rules = {})
+	def initialize(id, name, unit_price, unit)
     @id = id
 		@name = name
 		@unit_price = unit_price
 		@unit = unit
-		@rules = rules
 	end
 
   def <=>(other)
     unit_price <=> other.unit_price
   end
-
-	def add_rule(rule)
-    rule.product_id = id
-		rules[rule.name] = rule
-	end
-
-	def rule_price(name)
-		unit_price * rules[name].amount
-	end
-
-	def rule_size
-		rules.size
-	end
 end
 
 class PricingRule
@@ -38,7 +24,8 @@ class PricingRule
 
   attr_accessor :name, :amount, :price, :start, :fin, :product_id
 
-  def initialize(name, amount, price, start = nil, fin = nil)
+  def initialize(pid, name, amount, price, start = nil, fin = nil)
+    @product_id = pid
     @name = name
     @amount = amount
     @price = price
@@ -47,19 +34,35 @@ class PricingRule
   end
 
   def <=>(other)
-    unit_price <=> other.price
+    price <=> other.price
   end
 
   def timeboxed?
   	start && fin
   end
+
+  def no_time_limit
+    !(start && fin)
+  end
+
+  def expired?
+    fin < Time.now
+  end
+
+  def not_started?
+    start > Time.now
+  end
+
+  def started?
+    start < Time.now
+  end
+
+  def active?
+    start < Time.now && fin > Time.now
+  end
 end
 
 class CheckOut
-
-# key [Product]
-
-# value [Integer] quantity of products
 
   attr_reader :basket
 
@@ -83,7 +86,7 @@ class CheckOut
 
       product_pricing_rules = @pricing_rules[product.id]
     
-      if product_picing_rules && !product_pricing_rules.empty?
+      if product_pricing_rules && product_pricing_rules.any?
         price, amount = apply_pricing_rules(product, amount, product_pricing_rules)
         total_price += price
       end
