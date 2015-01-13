@@ -71,7 +71,7 @@ end
 class TestCheckout < Minitest::Test
   def setup
     @checkout = CheckOut.new({
-      1 => [PricingRule.new("two for one", 2, 1540)],
+      1 => [PricingRule.new("two for one", 2, 770)],
       3 => [PricingRule.new("half price per kilo", 3, 100)],
     })
     @products = [
@@ -93,9 +93,9 @@ class TestCheckout < Minitest::Test
       @checkout.scan(product)
     end
     assert 6, @checkout.size
-    assert 1, @checkout[1]
+    assert_equal 1, @checkout[@products.first]
     @checkout.scan(@products.first)
-    assert 2, @checkout[2]
+    assert_equal 2, @checkout[@products.first]
   end
 
   def test_pricing_rules_two_for_one
