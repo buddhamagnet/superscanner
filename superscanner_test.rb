@@ -1,7 +1,9 @@
 require 'minitest/autorun'
 require 'timecop'
 
-load 'superscanner.rb'
+load 'product.rb'
+load 'pricing_rule.rb'
+load 'checkout.rb'
 
 class TestProducts < Minitest::Test
 
@@ -22,10 +24,10 @@ end
 
 class TestPricingRule < Minitest::Test
   def setup
-    @rule_1 = PricingRule.new(1, "two for one", 2, 1540)
-    @rule_2 = PricingRule.new(1, "two for one", 2, 1540, Time.now, nil)
-    @rule_3 = PricingRule.new(1, "two for one", 2, 1540, nil, Time.now)
-    @rule_4 = PricingRule.new(1, "two for one", 2, 1540, Time.now, Time.now + 86400)
+    @rule_1 = PricingRule.new("two for one", 2, 1540)
+    @rule_2 = PricingRule.new("two for one", 2, 1540, Time.now, nil)
+    @rule_3 = PricingRule.new("two for one", 2, 1540, nil, Time.now)
+    @rule_4 = PricingRule.new("two for one", 2, 1540, Time.now, Time.now + 86400)
   end
 
   def test_no_time_limit
@@ -67,10 +69,46 @@ end
 
 class TestCheckout < Minitest::Test
   def setup
-    @checkout = CheckOut.new
+    @checkout = CheckOut.new({
+      1 => [PricingRule.new("two for one", 2, 1540)],
+      3 => [PricingRule.new("half price per kilo", 3, 100)],
+    })
+    @products = [
+      Product.new(1, "elder wand", 1540, "item"),
+      Product.new(2, "invisibilty cloak", 1000, "item"),
+      Product.new(3, "space dust", 100, "kg"),
+      Product.new(4, "melange", 19456, "kg"),
+      Product.new(5, "mithril", 23234, "kg"),
+      Product.new(6, "google glass", 850, "pair")
+    ]
   end
 
   def test_initial_basket_state
     assert @checkout.basket.empty?
+  end
+
+  def test_scan
+    @products.each do |product|
+      @checkout.scan(product)
+    end
+    assert 6, @checkout.size
+    assert 1, @checkout[1]
+    @checkout.scan(@products.first)
+    assert 2, @checkout[2]
+  end
+
+  def test_pricing_rules_two_for_one
+    @checkout.scan(@products.first).scan(@products.first)
+    assert_equal 1540, @checkout.total
+  end
+
+  def test_pricing_rules_half_price_per_kilo_not_triggered
+    @checkout.scan(@products[2]).scan(@products[2])
+    assert_equal 200, @checkout.total
+  end
+
+  def test_pricing_rules_half_price_per_kilo_triggered
+    @checkout.scan(@products[2]).scan(@products[2]).scan(@products[2])
+    assert_equal 150, @checkout.total
   end
 end

@@ -36,6 +36,6 @@ class PricingRule
   end
 
   def active?
-    start < Time.now && fin > Time.now
+    no_time_limit || (timeboxed? && start < Time.now && fin > Time.now)
   end
 end

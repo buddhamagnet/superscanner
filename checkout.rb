@@ -43,18 +43,22 @@ class CheckOut
   def apply_pricing_rules(product, amount, pricing_rules)
     price = 0
 
-    pricing_rules.sort!{|a,b| a.price <=> b.price}
-
-    pricing_rules.each do |pricing_rule|
+    pricing_rules.sort!.each do |pricing_rule|
       
+      # If the pricing rule is timeboxed and either has not started or has
+      # expired, break.
+      break unless pricing_rule.active?
+      # A pricing rule with a higher price than the product unit price is not
+      # counted.
       break if pricing_rule.price > product.unit_price
-
+      # Calculate the savings for item amounts equal to or above the pricing
+      # rule threshold.
       while amount >= pricing_rule.amount
         price += pricing_rule.price
         amount -= pricing_rule.amount
       end
     end
-
+    
     return price, amount
   end
 end
